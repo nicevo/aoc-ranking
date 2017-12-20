@@ -1,0 +1,56 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0f0f23;
+    font-family: "Source Code Pro", monospace;
+    font-size: 14px;
+    color: #cccccc;
+    overflow: hidden;
+}
+
+a:link {
+    color: #ccccff;
+}
+a:visited {
+    color: #cccccc;
+}
+a:active {
+    color: #ffccff;
+}
+a.hover {
+    color: #ffcccc;
+}
+
+.title {
+    float: left;
+    font-size: 14px;
+    color: #00cc00;
+    text-shadow: 0 0 2px #00cc00, 0 0 5px #00cc00;
+}
+
+.attrib {
+    float: right;
+    font-size: 14px;
+    color: #ffffff;
+}
+
+text.day {
+    fill: #999999;
+}
+
+text.label {
+    fill: #000000;
+}
+
+text.label.medal {
+    font-weight: bold;
+}
+
+polyline.ranking {
+    fill: none;
+    stroke-width: 4;
+}
+
+line.tickLine {
+    stroke: #999999;
+}
