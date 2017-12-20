@@ -8,24 +8,11 @@ body {
     overflow: hidden;
 }
 
-a:link {
-    color: #ccccff;
-}
-a:visited {
-    color: #cccccc;
-}
-a:active {
-    color: #ffccff;
-}
-a.hover {
-    color: #ffcccc;
-}
-
-.title {
-    float: left;
-    font-size: 14px;
+h1, h1 a {
+    font-size: 20px;
     color: #00cc00;
     text-shadow: 0 0 2px #00cc00, 0 0 5px #00cc00;
+    text-align: center;
 }
 
 .attrib {
