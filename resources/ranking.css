@@ -15,10 +15,14 @@ h1, h1 a {
     text-align: center;
 }
 
-.attrib {
-    float: right;
-    font-size: 14px;
+#attrib {
+    font-size: 10px;
+    color: #cccccc;
+    text-align: center;
+}
+#attrib a {
     color: #ffffff;
+    text-shadow: 0 0 5px #ffffff;
 }
 
 text.day {
