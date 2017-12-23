@@ -178,17 +178,28 @@ function addMedals(vis, data) {
         .append("svg:circle")
         .attr("class", "medal")
         .attr("cx", function(d, i) {
-            console.log(d, i)
             return SCALES.x(i+1);
         })
         .attr("cy", function(d, i) {
-            // console.log(d, i, d.overall_ranks[i])
             return SCALES.y(d.overall_ranks[i] - 1);
         })
-        .attr("r", MEDAL_RADIUS)
-        .attr('visibility', function(d, i) {
-            // return (i in d.rank_per_day) ? 'visible' : 'hidden'
-            return 'visible';
+        .attr("r", function(d, i) {
+            if (0 < d.ranks[i] && d.ranks[i] <= 3) {
+                return MEDAL_RADIUS / 2 * 3
+            }
+            return MEDAL_RADIUS
+        })
+        .style("stroke", function(d, i) {
+            if (d.ranks[i] == 1) {
+                return "gold"
+            }
+            else if (d.ranks[i] == 2) {
+                return "silver"
+            }
+            else if (d.ranks[i] == 3) {
+                return "#963"
+            }
+            return SCALES.clr(d.start);
         })
         .style("fill", function(d, i) {
             if (d.ranks[i] == 1) {
@@ -199,6 +210,9 @@ function addMedals(vis, data) {
             }
             else if (d.ranks[i] == 3) {
                 return "#963"
+            }
+            else if (d.stars[i] < 2) {
+                return "#0f0f23";
             }
             return SCALES.clr(d.start);
         })
