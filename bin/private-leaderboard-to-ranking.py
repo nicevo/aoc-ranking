@@ -8,7 +8,7 @@ import sys
 data = json.load(sys.stdin)
 
 max_points_per_star = len(data['members'])
-members = data['members'].keys()
+members = sorted(data['members'].keys())
 
 days = set()
 times_per_part = defaultdict(list)
