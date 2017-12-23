@@ -10,66 +10,64 @@ data = json.load(sys.stdin)
 max_points_per_star = len(data['members'])
 members = data['members'].keys()
 
+days = set()
 times_per_part = defaultdict(list)
 for member, scores in data['members'].items():
     for day, parts in scores['completion_day_level'].items():
+        day = day.zfill(2)
+        days.add(day)
         for part, part_time in parts.items():
-            times_per_part['{}.{}'.format(day.zfill(2), part)].append((member, part_time['get_star_ts']))
+            times_per_part['{}.{}'.format(day, part)].append((member, part_time['get_star_ts']))
 
 parts = sorted(times_per_part.keys())
+days = sorted(list(days))
 
-scores_per_part = defaultdict(Counter)
-scores_per_day = defaultdict(Counter)
-stars_per_day = defaultdict(Counter)
-rank_per_part = defaultdict(Counter)
-rank_per_day = defaultdict(Counter)
-for part, stars in times_per_part.items():
-    stars = sorted(stars, key=lambda x: x[1])
-    times_per_part[part] = stars
+scores = defaultdict(Counter)
+stars = defaultdict(Counter)
+ranks = defaultdict(Counter)
+totals = defaultdict(Counter)
+total_per_member = Counter()
 
-    score = max_points_per_star
-    rank = 1
-    for member, star in stars:
-        scores_per_part[member][part] = score
-        scores_per_day[member][part[:-2]] += score
-        stars_per_day[member][part[:-2]] += 1
-        rank_per_part[member][part] = rank
-        rank_per_day[member][part[:-2]] = rank
-        score -= 1
-        rank += 1
-
-totals_member_part = defaultdict(Counter)
-totals_member_day = defaultdict(Counter)
-totals_part_member = defaultdict(Counter)
-totals_day_member = defaultdict(Counter)
-for member in members:
-    total = 0
-    for part in parts:
-        total += scores_per_part[member][part]
-        totals_member_part[member][part] = total
-        totals_member_day[member][part[:-2]] = total
-        totals_part_member[part][member] = total
-        totals_day_member[part[:-2]][member] = total
-
-overall_rank_per_part = defaultdict(Counter)
-overall_rank_per_day = defaultdict(Counter)
 for part in parts:
-    rank = 1
-    for member, score in sorted(totals_part_member[part].items(), key=lambda x: -x[1]):
-        overall_rank_per_part[member][part] = rank
-        overall_rank_per_day[member][part[:-2]] = rank
-        rank += 1
+    day = part[:-2]
+    order = [times[0] for times in sorted(times_per_part[part], key=lambda x: x[1])]
 
-scores = []
+    for member in members:
+        if member in order:
+            rank = order.index(member) + 1
+            score = max_points_per_star - rank + 1
+            star = 1
+        else:
+            rank = 0
+            score = 0
+            star = 0
+
+        scores[member][day] += score
+        ranks[member][day] = rank
+        stars[member][day] += star
+        total_per_member[member] += score
+        totals[member][day] = total_per_member[member]
+
+totals_per_day = defaultdict(lambda: [])
 for member in members:
-    scores.append({
+    for day in days:
+        totals_per_day[day].append((member, totals[member][day]))
+overall_ranks = defaultdict(Counter)
+for day in days:
+    order = [t[0] for t in sorted(totals_per_day[day], key=lambda x: -x[1])]
+    for member in members:
+        overall_ranks[member][day] = order.index(member) + 1
+
+ranking = []
+for member in members:
+    ranking.append({
         'id': data['members'][member]['id'],
         'name': data['members'][member]['name'],
-        'scores_per_day': [s for _, s in sorted(scores_per_day[member].items())],
-        'stars_per_day': [s for _, s in sorted(stars_per_day[member].items())],
-        'rank_per_day': [s for _, s in sorted(rank_per_day[member].items())],
-        'totals_member_day': [s for _, s in sorted(totals_member_day[member].items())],
-        'overall_rank_per_day': [s for _, s in sorted(overall_rank_per_day[member].items())],
+        'scores': [s for _, s in sorted(scores[member].items())],
+        'stars': [s for _, s in sorted(stars[member].items())],
+        'ranks': [s for _, s in sorted(ranks[member].items())],
+        'totals': [s for _, s in sorted(totals[member].items())],
+        'overall_ranks': [s for _, s in sorted(overall_ranks[member].items())],
     })
 
-print(json.dumps({'scores': scores}))
+print(json.dumps({'ranking': ranking}, indent=4, sort_keys=True))

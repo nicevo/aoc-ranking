@@ -6,7 +6,7 @@ const INSETS = {'left': 225, 'right': 300, 'top': 30, 'bottom': 30};
 const PADDING = {'left': 20, 'right': 20, 'top': 15, 'bottom': 15};
 
 const TICK_MARK_LENGTH = 8;
-const MEDAL_RADIUS = 8;
+const MEDAL_RADIUS = 5;
 
 const SCALES = {};
 
@@ -17,8 +17,8 @@ const DAY_COUNT = 25
 
 window.onload = function() {
     d3.json("data/ranking.json", function(data) {
-        data.scores.sort(function(a, b) {
-            return a.overall_rank_per_day[a.overall_rank_per_day.length-1] - b.overall_rank_per_day[b.overall_rank_per_day.length-1];
+        data.ranking.sort(function(a, b) {
+            return a.overall_ranks[a.overall_ranks.length-1] - b.overall_ranks[b.overall_ranks.length-1];
         });
 
         visualize(data);
@@ -41,7 +41,7 @@ function visualize(data) {
 
     addNameLabels(vis, data, 'pole', SCALES.x(0) - PADDING.right, 'end')
         .attr('y', function (d) {
-            return SCALES.y(d.overall_rank_per_day[0]-1);
+            return SCALES.y(d.overall_ranks[0]-1);
         });
     addNameLabels(vis, data, 'flag', SCALES.x(DAY_COUNT+1) + PADDING.left, 'start')
             .attr('y', function (d, i) {
@@ -57,7 +57,7 @@ function configureScales(data) {
         .range([INSETS.left, WIDTH - INSETS.right]);
 
     SCALES.y = d3.scale.linear()
-        .domain([0, data.scores.length - 1])
+        .domain([0, data.ranking.length - 1])
         .range([INSETS.top, HEIGHT - INSETS.bottom]);
 
     SCALES.clr = d3.scale.category20();
@@ -125,19 +125,19 @@ function addLabels(vis, data, y, dy, cssClass) {
 
 function addRankingLines(vis, days) {
     vis.selectAll('polyline.ranking')
-        .data(days.scores)
+        .data(days.ranking)
         .enter()
         .append('svg:polyline')
         .attr('class', 'ranking')
         .attr('points', function(d) {
             var points = [];
-            for (var i = 1; i <= d.overall_rank_per_day.length; i++) {
-                points[i] = SCALES.x(i) + ',' + SCALES.y(d.overall_rank_per_day[i-1] - 1);
+            for (var i = 1; i <= d.overall_ranks.length; i++) {
+                points[i] = SCALES.x(i) + ',' + SCALES.y(d.overall_ranks[i-1] - 1);
             }
             return points.join(' ');
         })
         .style('stroke', function(d) {
-            return SCALES.clr(d.overall_rank_per_day[0]);
+            return SCALES.clr(d.overall_ranks[0]);
         })
         .on('mouseover', function(d) {
             highlight(vis, d.name);
@@ -149,7 +149,7 @@ function addRankingLines(vis, days) {
 
 function addNameLabels(vis, data, cssClass, x, textAnchor) {
     return vis.selectAll('text.label.' + cssClass)
-        .data(data.scores)
+        .data(data.ranking)
         .enter()
         .append('svg:text')
         .attr('class', 'label ' + cssClass)
@@ -160,7 +160,7 @@ function addNameLabels(vis, data, cssClass, x, textAnchor) {
             return d.name;
         })
         .style('fill', function(d) {
-            return SCALES.clr(d.overall_rank_per_day[0]);
+            return SCALES.clr(d.overall_ranks[0]);
         })
         .on('mouseover', function(d) {
             highlight(vis, d.name);
@@ -171,29 +171,33 @@ function addNameLabels(vis, data, cssClass, x, textAnchor) {
 }
 
 function addMedals(vis, data) {
+    // console.log(vis, data)
     vis.selectAll("circle.medal")
-        .data(data)
+        .data(data.ranking)
         .enter()
         .append("svg:circle")
         .attr("class", "medal")
         .attr("cx", function(d, i) {
-            return SCALES.x(i);
+            console.log(d, i)
+            return SCALES.x(i+1);
         })
         .attr("cy", function(d, i) {
-            return SCALES.y(d.overall_rank_per_day[i] - 1);
+            // console.log(d, i, d.overall_ranks[i])
+            return SCALES.y(d.overall_ranks[i] - 1);
         })
         .attr("r", MEDAL_RADIUS)
         .attr('visibility', function(d, i) {
-            return (i in d.rank_per_day) ? 'visible' : 'hidden'
+            // return (i in d.rank_per_day) ? 'visible' : 'hidden'
+            return 'visible';
         })
         .style("fill", function(d, i) {
-            if (d.rank_per_day[i] == 1) {
+            if (d.ranks[i] == 1) {
                 return "gold"
             }
-            else if (d.rank_per_day[i] == 2) {
+            else if (d.ranks[i] == 2) {
                 return "silver"
             }
-            else if (d.rank_per_day[i] == 3) {
+            else if (d.ranks[i] == 3) {
                 return "#963"
             }
             return SCALES.clr(d.start);
@@ -212,15 +216,16 @@ function addMedals(vis, data) {
         .append("svg:text")
         .attr("class", "label medal")
         .attr("x", function(d, i) {
-            return SCALES.x(i);
+            return SCALES.x(i+1);
         })
         .attr("y", function(d, i) {
-            return SCALES.y(d.rank_per_day[i] - 1);
+            return SCALES.y(d.overall_ranks[i] - 1);
         })
         .attr("dy", "0.35em")
         .attr("text-anchor", "middle")
         .text(function(d, i) {
-            return d.rank_per_day[i];
+            // half circle: &#9686;
+            return d.ranks[i];
         })
         .on('mouseover', function(d) {
             highlight(vis, d.name);
