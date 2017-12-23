@@ -6,11 +6,13 @@ const INSETS = {'left': 225, 'right': 300, 'top': 30, 'bottom': 30};
 const PADDING = {'left': 20, 'right': 20, 'top': 15, 'bottom': 15};
 
 const TICK_MARK_LENGTH = 8;
-const MEDAL_RADIUS = 5;
+
+const MEDAL_RADIUS = 7;
+const INCOMPLETE_RADIUS = 4;
 
 const SCALES = {};
 
-var DIMMED_OPACITY = 0.3;
+var DIMMED_OPACITY = 0.2;
 var HIGHLIGHT_OPACITY = 1.0;
 
 const DAY_COUNT = 25
@@ -48,7 +50,7 @@ function visualize(data) {
             return SCALES.y(i);
         });
 
-    // addMedals(vis, data);
+    addMedals(vis, data);
 }
 
 function configureScales(data) {
@@ -63,20 +65,24 @@ function configureScales(data) {
     SCALES.clr = d3.scale.category20();
 }
 
-function highlight(vis, name) {
+function highlight(vis, id) {
     vis.selectAll('polyline')
         .style('opacity', function(d) {
-            return d.name == name ? HIGHLIGHT_OPACITY : DIMMED_OPACITY;
+            return d.id == id ? HIGHLIGHT_OPACITY : DIMMED_OPACITY;
         });
 
     vis.selectAll('circle')
         .style('opacity', function(d) {
-            return d.name == name ? HIGHLIGHT_OPACITY : DIMMED_OPACITY;
+            return DIMMED_OPACITY;
+        });
+    vis.selectAll('circle.m'+id)
+        .style('opacity', function(d) {
+            return HIGHLIGHT_OPACITY;
         });
 
     vis.selectAll('text.label')
         .style('opacity', function(d) {
-            return d.name == name ? HIGHLIGHT_OPACITY : DIMMED_OPACITY;
+            return d.id == id ? HIGHLIGHT_OPACITY : DIMMED_OPACITY;
         });
 }
 
@@ -123,9 +129,9 @@ function addLabels(vis, data, y, dy, cssClass) {
         });
 }
 
-function addRankingLines(vis, days) {
+function addRankingLines(vis, data) {
     vis.selectAll('polyline.ranking')
-        .data(days.ranking)
+        .data(data.ranking)
         .enter()
         .append('svg:polyline')
         .attr('class', 'ranking')
@@ -140,7 +146,7 @@ function addRankingLines(vis, days) {
             return SCALES.clr(d.overall_ranks[0]);
         })
         .on('mouseover', function(d) {
-            highlight(vis, d.name);
+            highlight(vis, d.id);
         })
         .on('mouseout', function() {
             unhighlight(vis);
@@ -163,7 +169,7 @@ function addNameLabels(vis, data, cssClass, x, textAnchor) {
             return SCALES.clr(d.overall_ranks[0]);
         })
         .on('mouseover', function(d) {
-            highlight(vis, d.name);
+            highlight(vis, d.id);
         })
         .on('mouseout', function() {
             unhighlight(vis);
@@ -171,82 +177,67 @@ function addNameLabels(vis, data, cssClass, x, textAnchor) {
 }
 
 function addMedals(vis, data) {
-    // console.log(vis, data)
-    vis.selectAll("circle.medal")
-        .data(data.ranking)
-        .enter()
-        .append("svg:circle")
-        .attr("class", "medal")
-        .attr("cx", function(d, i) {
-            return SCALES.x(i+1);
-        })
-        .attr("cy", function(d, i) {
-            return SCALES.y(d.overall_ranks[i] - 1);
-        })
-        .attr("r", function(d, i) {
-            if (0 < d.ranks[i] && d.ranks[i] <= 3) {
-                return MEDAL_RADIUS / 2 * 3
-            }
-            return MEDAL_RADIUS
-        })
-        .style("stroke", function(d, i) {
-            if (d.ranks[i] == 1) {
-                return "gold"
-            }
-            else if (d.ranks[i] == 2) {
-                return "silver"
-            }
-            else if (d.ranks[i] == 3) {
-                return "#963"
-            }
-            return SCALES.clr(d.start);
-        })
-        .style("fill", function(d, i) {
-            if (d.ranks[i] == 1) {
-                return "gold"
-            }
-            else if (d.ranks[i] == 2) {
-                return "silver"
-            }
-            else if (d.ranks[i] == 3) {
-                return "#963"
-            }
-            else if (d.stars[i] < 2) {
+    data.ranking.forEach(function (member, idx) {
+        vis.selectAll("circle.medal.m" + member.id)
+            .data(member.ranks)
+            .enter()
+            .append("svg:circle")
+            .attr("class", "medal m" + member.id)
+            .attr("cx", function(d, i) {
+                return SCALES.x(i+1);
+            })
+            .attr("cy", function(d, i) {
+                return SCALES.y(member.overall_ranks[i] - 1);
+            })
+            .attr("r", function(d) {
+                if (0 < d && d <= 3) {
+                    return MEDAL_RADIUS
+                }
+                return INCOMPLETE_RADIUS
+            })
+            .attr("visibility", function(d, i) {
+                if (d <= 3) {
+                    return "visible"
+                }
+                return "hidden"
+            })
+            .style("stroke", function(d, i) {
+                if (0 < d && d <= 3) {
+                    return "#0f0f23"
+                }
+                if (d == 1) {
+                    return "gold"
+                }
+                else if (d == 2) {
+                    return "silver"
+                }
+                else if (d == 3) {
+                    return "#963"
+                }
+                return SCALES.clr(member.overall_ranks[0]);
+            })
+            .style("fill", function(d, i) {
+                if (d == 1) {
+                    return "gold"
+                }
+                else if (d == 2) {
+                    return "silver"
+                }
+                else if (d == 3) {
+                    return "#963"
+                }
+                else if (d > 3) {
+                    return SCALES.clr(member.overall_ranks[0]);
+                }
                 return "#0f0f23";
-            }
-            return SCALES.clr(d.start);
-        })
-        .on('mouseover', function(d) {
-            highlight(vis, d.name);
-        })
-        .on('mouseout', function() {
-            unhighlight(vis);
-        });
-
-    // Place text.
-    vis.selectAll("text.label.medal")
-        .data(data)
-        .enter()
-        .append("svg:text")
-        .attr("class", "label medal")
-        .attr("x", function(d, i) {
-            return SCALES.x(i+1);
-        })
-        .attr("y", function(d, i) {
-            return SCALES.y(d.overall_ranks[i] - 1);
-        })
-        .attr("dy", "0.35em")
-        .attr("text-anchor", "middle")
-        .text(function(d, i) {
-            // half circle: &#9686;
-            return d.ranks[i];
-        })
-        .on('mouseover', function(d) {
-            highlight(vis, d.name);
-        })
-        .on('mouseout', function() {
-            unhighlight(vis);
-        });
+            })
+            .on('mouseover', function(d) {
+                highlight(vis, member.id);
+            })
+            .on('mouseout', function() {
+                unhighlight(vis);
+            });
+    });
 }
 
 function getWindowDimensions() {
