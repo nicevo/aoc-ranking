@@ -1,9 +1,14 @@
 #!/usr/bin/env python
-
 from collections import defaultdict
 from collections import Counter
 import json
 import sys
+import argparse
+
+parser = argparse.ArgumentParser(description="Parse the JSON output of an Advent of Code private leaderboard to create the data file for a ranking visualization")
+parser.add_argument("-a", "--anonymous", help="make output anonymous, by using ID's as name",
+                    action="store_true")
+args = parser.parse_args()
 
 data = json.load(sys.stdin)
 
@@ -60,9 +65,14 @@ for day in days:
 
 ranking = []
 for member in members:
+    if args.anonymous:
+        name = 'User #{}'.format(data['members'][member]['id'])
+    else:
+        name = data['members'][member]['name']
+
     ranking.append({
         'id': data['members'][member]['id'],
-        'name': 'User #{}'.format(data['members'][member]['id']),
+        'name': name,
         'scores': [s for _, s in sorted(scores[member].items())],
         'stars': [s for _, s in sorted(stars[member].items())],
         'ranks': [s for _, s in sorted(ranks[member].items())],
