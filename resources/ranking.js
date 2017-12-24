@@ -19,6 +19,9 @@ const DAY_COUNT = 25
 
 window.onload = function() {
     d3.json("data/ranking.json", function(data) {
+        data.ranking = data.ranking.filter(function(a) {
+            return a.totals[a.totals.length-1] > 0
+        });
         data.ranking.sort(function(a, b) {
             return a.overall_ranks[a.overall_ranks.length-1] - b.overall_ranks[b.overall_ranks.length-1];
         });
