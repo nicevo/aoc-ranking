@@ -8,7 +8,7 @@ const PADDING = {'left': 20, 'right': 20, 'top': 15, 'bottom': 15};
 const TICK_MARK_LENGTH = 8;
 
 const MEDAL_RADIUS = 7;
-const INCOMPLETE_RADIUS = 4;
+const INCOMPLETE_RADIUS = 5;
 
 const SCALES = {};
 
