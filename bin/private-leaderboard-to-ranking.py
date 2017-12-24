@@ -62,7 +62,7 @@ ranking = []
 for member in members:
     ranking.append({
         'id': data['members'][member]['id'],
-        'name': data['members'][member]['name'],
+        'name': 'User #{}'.format(data['members'][member]['id']),
         'scores': [s for _, s in sorted(scores[member].items())],
         'stars': [s for _, s in sorted(stars[member].items())],
         'ranks': [s for _, s in sorted(ranks[member].items())],
